@@ -27,9 +27,7 @@ func EncryptWithPassword(plaintext []byte, password []byte) (ciphertext []byte, 
 	rand.Read(ciphertext)
 
 	gcm.Seal(ciphertext, ciphertext, plaintext, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error sealing with gcm: %w", err)
-	}
+
 	return ciphertext, nil
 }
 
@@ -56,4 +54,24 @@ func DecryptWithPassword(ciphertext []byte, password []byte) (plaintext []byte, 
 	}
 
 	return plaintext, nil
+}
+
+func Encrypt(plaintext []byte) (ciphertext []byte, aesKey []byte, err error) {
+	aesKey = make([]byte, 32)
+
+	rand.Read(aesKey)
+
+	c, err := aes.NewCipher(aesKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error making cipher block from aes key: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(c)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error making gcm cipher: %w", err)
+	}
+	ciphertext = make([]byte, gcm.NonceSize())
+
+	gcm.Seal(ciphertext, ciphertext, plaintext, nil)
+	return ciphertext, aesKey, nil
 }
