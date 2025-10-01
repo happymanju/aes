@@ -71,7 +71,25 @@ func Encrypt(plaintext []byte) (ciphertext []byte, aesKey []byte, err error) {
 		return nil, nil, fmt.Errorf("error making gcm cipher: %w", err)
 	}
 	ciphertext = make([]byte, gcm.NonceSize())
+	rand.Read(ciphertext)
 
 	gcm.Seal(ciphertext, ciphertext, plaintext, nil)
 	return ciphertext, aesKey, nil
+}
+
+func Decrypt(ciphertext []byte, aesKey []byte) (plaintext []byte, err error) {
+	c, err := aes.NewCipher(aesKey)
+	if err != nil {
+		return nil, fmt.Errorf("error making aes cipher: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(c)
+	if err != nil {
+		return nil, fmt.Errorf("error making gcm block: %w", err)
+	}
+
+	plaintext = make([]byte, 0)
+
+	plaintext, err = gcm.Open(plaintext, ciphertext[0:gcm.NonceSize()], ciphertext[gcm.NonceSize():], nil)
+	return plaintext, nil
 }
